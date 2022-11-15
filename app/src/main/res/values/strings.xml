@@ -1,5 +1,4 @@
 <resources>
-    <string name="google_maps_key">AIzaSyBq-zZMaM9iY4POpPUc2SnrvrV5cYYCOOg</string>
     <string name="app_name">Location Reminders</string>
     <string name="error_happened">Error happened</string>
     <string name="retry">Retry</string>

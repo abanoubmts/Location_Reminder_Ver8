@@ -15,6 +15,7 @@ import android.view.*
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
+import androidx.navigation.fragment.findNavController
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
@@ -70,7 +71,14 @@ class SelectLocationFragment : BaseFragment() , OnMapReadyCallback {  // that wi
 
 
 //        TODO: call this function after the user confirms on the selected location
-        onLocationSelected()
+     //   onLocationSelected()
+
+
+
+
+        binding.saveLocation.setOnClickListener {
+            onLocationSelected()
+        }
 
         return binding.root
 
@@ -83,12 +91,21 @@ class SelectLocationFragment : BaseFragment() , OnMapReadyCallback {  // that wi
         // When the user confirms on the selected location,
         // send back the selected location details to the view model
         // and navigate back to the previous fragment to save the reminder and add the geofence
-        marker?.let {marker ->
+       marker?.let {marker ->
             _viewModel.latitude.value = marker.position.latitude
             _viewModel.longitude.value = marker.position.longitude
             _viewModel.reminderSelectedLocationStr.value = marker.title
             _viewModel.navigationCommand.value = NavigationCommand.Back
         }
+/*
+        marker?.let {
+            _viewModel.reminderSelectedLocationStr.value = it.title
+            _viewModel.latitude.value = it.position.latitude
+            _viewModel.longitude.value = it.position.longitude
+        }
+
+        findNavController().popBackStack()
+        */
     }
 
 
