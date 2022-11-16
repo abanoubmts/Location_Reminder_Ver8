@@ -19,6 +19,7 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
+
         android:name=".MyApp"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -37,29 +38,28 @@
         -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyBq-zZMaMiY4POpPUc2SnrvrV5cYYCOOg" />
-
-        <activity android:name=".authentication.AuthenticationActivity"
-            android:exported="true">
-
+            android:value="AIzaSyBeBm0wA02KVjcavlHOZxlljFcWM7gv2MM" />
+        <activity android:name=".locationreminders.RemindersActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".locationreminders.RemindersActivity"
-            android:exported="true">
+        <activity android:name=".authentication.AuthenticationActivity" android:exported="true">
 
         </activity>
+
         <receiver
             android:name=".locationreminders.geofence.GeofenceBroadcastReceiver"
             android:enabled="true"
             android:exported="true" />
+
         <service
             android:name=".locationreminders.geofence.GeofenceTransitionsJobIntentService"
             android:exported="true"
             android:permission="android.permission.BIND_JOB_SERVICE" />
+
     </application>
 
 </manifest>

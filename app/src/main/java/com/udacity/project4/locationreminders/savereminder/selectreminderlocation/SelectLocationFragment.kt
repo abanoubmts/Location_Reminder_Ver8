@@ -3,16 +3,19 @@ package com.udacity.project4.locationreminders.savereminder.selectreminderlocati
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.annotation.TargetApi
 import android.app.Activity
 import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.location.Location
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.*
 import android.widget.Toast
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import androidx.navigation.fragment.findNavController
@@ -26,6 +29,8 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import com.google.android.material.snackbar.Snackbar
 import com.udacity.project4.Constants
+import com.udacity.project4.Constants.REQUEST_TURN_DEVICE_LOCATION_ON
+import com.udacity.project4.Constants.TAG
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.base.NavigationCommand
@@ -34,10 +39,16 @@ import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import org.koin.android.ext.android.inject
 import java.util.*
-
+private const val REQUEST_CODE_BACKGROUND = 102929
+private const val REQUEST_TURN_DEVICE_LOCATION_ON = 12433
 class SelectLocationFragment : BaseFragment() , OnMapReadyCallback {  // that will be used to getmap async
 
+
     //Use Koin to get the view model of the SaveReminder
+
+    var long : Double = 0.0
+    var title = ""
+
     override val _viewModel: SaveReminderViewModel by inject()
     private lateinit var binding: FragmentSelectLocationBinding
     private lateinit var map: GoogleMap
@@ -70,14 +81,20 @@ class SelectLocationFragment : BaseFragment() , OnMapReadyCallback {  // that wi
 
 
 
-//        TODO: call this function after the user confirms on the selected location
+//        Done: call this function after the user confirms on the selected location
      //   onLocationSelected()
 
 
 
 
-        binding.saveLocation.setOnClickListener {
-            onLocationSelected()
+
+
+        binding.saveLocation.setOnClickListener{
+            if(marker!= null) {
+                onLocationSelected()
+            }else{
+                Toast.makeText(context,"Please Select a location !",Toast.LENGTH_LONG).show()
+            }
         }
 
         return binding.root
@@ -97,15 +114,6 @@ class SelectLocationFragment : BaseFragment() , OnMapReadyCallback {  // that wi
             _viewModel.reminderSelectedLocationStr.value = marker.title
             _viewModel.navigationCommand.value = NavigationCommand.Back
         }
-/*
-        marker?.let {
-            _viewModel.reminderSelectedLocationStr.value = it.title
-            _viewModel.latitude.value = it.position.latitude
-            _viewModel.longitude.value = it.position.longitude
-        }
-
-        findNavController().popBackStack()
-        */
     }
 
 
@@ -114,17 +122,21 @@ class SelectLocationFragment : BaseFragment() , OnMapReadyCallback {  // that wi
     }
 
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
-        // TODO: Change the map type based on the user's selection.
+        // Done: Change the map type based on the user's selection.
         R.id.normal_map -> {
+            map.mapType = GoogleMap.MAP_TYPE_NORMAL
             true
         }
         R.id.hybrid_map -> {
+            map.mapType = GoogleMap.MAP_TYPE_HYBRID
             true
         }
         R.id.satellite_map -> {
+            map.mapType = GoogleMap.MAP_TYPE_SATELLITE
             true
         }
         R.id.terrain_map -> {
+            map.mapType = GoogleMap.MAP_TYPE_TERRAIN
             true
         }
         else -> super.onOptionsItemSelected(item)
@@ -174,8 +186,8 @@ class SelectLocationFragment : BaseFragment() , OnMapReadyCallback {  // that wi
 
 
             val snippet = String.format(
-                Locale.getDefault(),
-                "Lat: %1$.7f, Long: %2$.7f",
+                Locale.getDefault().country,
+                "Lat: 31.477898, Long: 30.0444",
                 latLng.latitude,
                 latLng.longitude
             )
@@ -200,14 +212,43 @@ class SelectLocationFragment : BaseFragment() , OnMapReadyCallback {  // that wi
         PrepareMapStyle(map)
         PreparePositionClick(map)
         PrepareMapLongClick(map)
-
+/*
         // check permission granted for application or not
         if (isPermissionGranted()) {
             getUserLocation()
         } else {
             requestLocationPermission()  // ask user to allow permission on application (Allow / Deny)
         }
+*/
+        scanMyLocation()
+       // map.moveCamera(CameraUpdateFactory.zoomIn())
     }
+
+    @SuppressLint("MissingPermission")
+    private fun scanMyLocation() {
+        if (isPermissionGranted()) {
+            map.isMyLocationEnabled = true
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                checkDeviceLocationSettings()
+            } else {
+                requestQPermission()
+            }
+
+        } else {
+            ActivityCompat.requestPermissions(
+                context as Activity,
+                arrayOf<String>(Manifest.permission.ACCESS_FINE_LOCATION),
+                1 //REQUEST_LOCATION_PERMISSION
+            )
+        }
+        //        DONE: zoom to the user location after taking his permission
+
+
+      //  map.moveCamera(CameraUpdateFactory.zoomIn())
+        getUserLocation()
+    }
+
+
 
     @SuppressLint("MissingPermission")  // through this line , checks this against the set of permissions required to access those APIs.
     // If the code using those APIs is called at runtime, then the program will crash.
@@ -234,26 +275,74 @@ class SelectLocationFragment : BaseFragment() , OnMapReadyCallback {  // that wi
         LocationServices.getFusedLocationProviderClient(requireActivity())
     }
 
-    private fun isPermissionGranted() : Boolean {
+
+
+    private fun isPermissionGranted(): Boolean {
         return ContextCompat.checkSelfPermission(
-            requireActivity(),
-            Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+            context!!,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
     }
 
-    private fun requestLocationPermission() {
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) ==
-            PackageManager.PERMISSION_GRANTED &&
-            ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) ==
-            PackageManager.PERMISSION_GRANTED) {
-            map.isMyLocationEnabled = true
+    @TargetApi(Build.VERSION_CODES.Q)
+    private fun requestQPermission() {
+        val hasForegroundPermission = ActivityCompat.checkSelfPermission(
+            activity!!,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
 
+        if (hasForegroundPermission) {
+            val hasBackgroundPermission = ActivityCompat.checkSelfPermission(
+                activity!!,
+                Manifest.permission.ACCESS_BACKGROUND_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+            if (hasBackgroundPermission) {
+                checkDeviceLocationSettings()
+            } else {
+                ActivityCompat.requestPermissions(
+                    activity!!,
+                    arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
+                    REQUEST_CODE_BACKGROUND
+                )
+            }
         }
+    }
 
-        else {
-            this.requestPermissions(
-                arrayOf<String>(Manifest.permission.ACCESS_FINE_LOCATION),
-                Constants.PERMISSION_CODE_LOCATION_REQUEST
-            )
+
+/*
+check  the gadget’s location.
+Permissions granted will be worthless if the user’s device location is deactivated.
+To verify that the device’s location is enabled, add the following code.
+ */
+
+
+    private fun checkDeviceLocationSettings(resolve: Boolean = true) {
+        val locationRequest = LocationRequest.create().apply {
+            priority = LocationRequest.PRIORITY_LOW_POWER
+        }
+        val requestBuilder = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
+        val settingsClient = LocationServices.getSettingsClient(activity!!)
+        val locationSettingsResponseTask =
+            settingsClient.checkLocationSettings(requestBuilder.build())
+        locationSettingsResponseTask.addOnFailureListener { exception ->
+            if (exception is ResolvableApiException && resolve) {
+                try {
+                    exception.startResolutionForResult(
+                        activity!!,
+                        REQUEST_TURN_DEVICE_LOCATION_ON
+                    )
+                } catch (sendEx: IntentSender.SendIntentException) {
+                    Log.d(TAG, "Error getting location settings resolution: " + sendEx.message)
+                }
+            } else {
+                Snackbar.make(
+                    view!!,
+                    R.string.location_required_error, Snackbar.LENGTH_INDEFINITE
+                ).setAction(android.R.string.ok) {
+                    checkDeviceLocationSettings()
+                }.show()
+            }
+
         }
     }
 

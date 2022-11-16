@@ -4,13 +4,15 @@ import com.google.android.gms.location.Geofence
 
 object Constants {
 
+
+
         // authentication
         const val TAG_AUTH = "AuthenticationActivity"
         const val SIGN_IN_RESULT_CODE = 1001
 //  used in getUserLocation() at selected location class
 
         const val DEFAULT_ZOOM_LEVEL = 15f
-
+        const val REQUEST_LOCATION_PERMISSION = 1
         // used in  requestLocationPermission
         const val PERMISSION_CODE_LOCATION_REQUEST = 1
 

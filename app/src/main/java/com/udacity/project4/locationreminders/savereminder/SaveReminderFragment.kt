@@ -18,6 +18,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
+import androidx.navigation.findNavController
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.material.snackbar.Snackbar
@@ -90,14 +91,21 @@ class SaveReminderFragment : BaseFragment() {
             //{title , description , location , latitude , longitude}
             reminderDataItem = ReminderDataItem(title, description, location, latitude, longitude)
 
+
+
+
             if (_viewModel.validateEnteredData(reminderDataItem)){
                 if (foregroundAndBackgroundLocationPermissionApproved()){
-                    checkDeviceLocationSetting()
+                  checkDeviceLocationSetting()
+
+                    //addGeoForRemainder()
                 } else {
                     requestForegroundAndBackgroundLocationPermissions()
                 }
+
             }
-        }
+            }
+
     }
 /*
 implement check permission
@@ -139,11 +147,6 @@ It’s useful to look into the Android API version of the device.
         requestPermissions(permissionsArray, requestCode)
     }
 
-/*
-check  the gadget’s location.
-Permissions granted will be worthless if the user’s device location is deactivated.
-To verify that the device’s location is enabled, add the following code.
- */
 
     private fun checkDeviceLocationSetting(resolve:Boolean = true) {
         // create a location request that request for the quality of service to update the location
@@ -245,36 +248,7 @@ reference to this  link <<https://www.section.io/engineering-education/geofencin
 
         }
     }
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
-    ) {
-        Log.d(Constants.TAG_save, "onRequestPermissionResult")
 
-        if (
-            grantResults.isEmpty() ||
-            grantResults[Constants.LOCATION_PERMISSION_INDEX] == PackageManager.PERMISSION_DENIED ||
-            (requestCode == Constants.REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE &&
-                    grantResults[Constants.BACKGROUND_LOCATION_PERMISSION_INDEX] ==
-                    PackageManager.PERMISSION_DENIED))
-        {
-            Snackbar.make(
-                binding.saveReminder,
-                R.string.permission_denied_explanation,
-                Snackbar.LENGTH_INDEFINITE
-            )
-                .setAction(R.string.settings) {
-                    startActivity(Intent().apply {
-                        action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
-                        data = Uri.fromParts("package", BuildConfig.APPLICATION_ID, null)
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                    })
-                }.show()
-        } else {
-            checkDeviceLocationSetting()
-        }
-    }
     override fun onDestroy() {
         super.onDestroy()
         //make sure to clear the view model after destroy, as it's a single view model.

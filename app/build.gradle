@@ -6,6 +6,7 @@ apply plugin: 'kotlin-android-extensions'
 apply plugin: 'com.google.gms.google-services'
 apply plugin: "kotlin-kapt"
 
+
 android {
     compileSdkVersion rootProject.compileSdkVersion
     //buildToolsVersion "29.0.2"
@@ -79,8 +80,10 @@ dependencies {
     testImplementation project(path: ':app')
     androidTestImplementation project(path: ':app')
     kapt "androidx.lifecycle:lifecycle-compiler:$archLifecycleVersion"
-    implementation "androidx.lifecycle:lifecycle-extensions:$extLifecycleVersion"
+    implementation "androidx.lifecycle:lifecycle-extensions:$archLifecycleVersion"
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$archLifecycleVersion"
+    implementation "androidx.lifecycle:lifecycle-extensions:$archLifecycleVersion"
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:$archLifecycleVersion"
 
     implementation "androidx.navigation:navigation-fragment-ktx:$navigationVersion"
     implementation "androidx.navigation:navigation-ui-ktx:$navigationVersion"
@@ -147,7 +150,8 @@ dependencies {
     implementation "com.google.android.gms:play-services-maps:$playServicesVersion"
 
     //Firebase Auth
-    implementation 'com.firebaseui:firebase-ui-auth:7.1.1'
+    // FirebaseUI for Firebase Auth
+    implementation 'com.firebaseui:firebase-ui-auth:5.0.0'
 
 // to enable  multidex for apps with over 64K methods
     //implementation("androidx.multidex:multidex:$multidex_version")
