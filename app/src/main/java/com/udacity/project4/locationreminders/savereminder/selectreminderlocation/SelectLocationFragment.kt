@@ -253,7 +253,7 @@ class SelectLocationFragment : BaseFragment() , OnMapReadyCallback {  // that wi
     @SuppressLint("MissingPermission")  // through this line , checks this against the set of permissions required to access those APIs.
     // If the code using those APIs is called at runtime, then the program will crash.
     private fun getUserLocation() {
-        map.isMyLocationEnabled = true
+     //   map.isMyLocationEnabled = true
         Log.d("MapsActivity", "getLastLocation Called")
         fusedLocationProviderClient.lastLocation
             .addOnSuccessListener { location : Location? ->

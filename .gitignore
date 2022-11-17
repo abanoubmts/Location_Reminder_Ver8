@@ -12,3 +12,4 @@
 /captures
 .externalNativeBuild
 .cxx
+/app/src/main/java/com/udacity/project4/authentication/LoginViewModel.kt

@@ -10,11 +10,10 @@ import com.udacity.project4.locationreminders.getOrAwaitValue
 import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.runBlockingTest
 import org.hamcrest.CoreMatchers
-import org.junit.After
-import org.junit.Assert
-import org.junit.Rule
-import org.junit.Test
+import org.hamcrest.MatcherAssert
+import org.junit.*
 import org.junit.runner.RunWith
 import org.koin.core.context.stopKoin
 
@@ -25,42 +24,65 @@ class SaveReminderViewModelTest {
 
     //Done: provide testing to the SaveReminderView and its live data objects
 
+
+    private lateinit var fakeReminderDataSource: FakeDataSource
+    private lateinit var saveReminderViewModel: SaveReminderViewModel
+
+
+    // Executes each task synchronously using Architecture Components.
     @get:Rule
     var instantExecutorRule = InstantTaskExecutorRule()
 
     @get:Rule
     var mainCoroutineRule = MainCoroutine()
 
-    val list = listOf<ReminderDataItem>(ReminderDataItem("title", "description","location",(-360..360).random().toDouble(),(-360..360).random().toDouble()))
-    private val firstReminder = list[0]
 
-    private lateinit var fakeDataSource: FakeDataSource
-    private lateinit var saveReminderViewModel: SaveReminderViewModel
+    @Before
+    fun setupViewModel() {
+        fakeReminderDataSource = FakeDataSource()
+        saveReminderViewModel = SaveReminderViewModel(
+            ApplicationProvider.getApplicationContext(),
+            fakeReminderDataSource)
+    }
 
+    @Test
+    fun shouldReturnError () = runBlockingTest  {
+        val result = saveReminderViewModel.validateEnteredData(createIncompleteReminderDataItem())
+        MatcherAssert.assertThat(result, CoreMatchers.`is`(false))
+    }
+
+    private fun createIncompleteReminderDataItem(): ReminderDataItem {
+        return ReminderDataItem(
+            "",
+            "desc_test",
+            "location_pinned",
+            78.00,
+            80.00)
+    }
+
+    @Test
+    fun check_loading() = runBlockingTest {
+
+        mainCoroutineRule.pauseDispatcher()
+        saveReminderViewModel.saveReminder(createFakeReminderDataItem())
+
+        MatcherAssert.assertThat(saveReminderViewModel.showLoading.value, CoreMatchers.`is`(true))
+
+        mainCoroutineRule.resumeDispatcher()
+        MatcherAssert.assertThat(saveReminderViewModel.showLoading.value, CoreMatchers.`is`(false))
+    }
+
+    private fun createFakeReminderDataItem(): ReminderDataItem {
+        return ReminderDataItem(
+            "title test",
+            "description aaa",
+            "location select_location ",
+            77.00,
+            77.00)
+    }
 
     @After
     fun tearDown() {
         stopKoin()
     }
-
-    @Test
-    fun check_loading() {
-        fakeDataSource = FakeDataSource()
-        saveReminderViewModel = SaveReminderViewModel(ApplicationProvider.getApplicationContext(), fakeDataSource)
-        mainCoroutineRule.pauseDispatcher()
-        saveReminderViewModel.validateAndSaveReminder(firstReminder)
-        Assert.assertThat(saveReminderViewModel.showLoading.getOrAwaitValue(), CoreMatchers.`is`(true))
-    }
-
-    @Test
-    fun returnError() {
-        fakeDataSource = FakeDataSource(null)
-        saveReminderViewModel = SaveReminderViewModel(ApplicationProvider.getApplicationContext(), fakeDataSource)
-        firstReminder.title = null
-        saveReminderViewModel.validateAndSaveReminder(firstReminder)
-        Assert.assertThat(saveReminderViewModel.showSnackBarInt.getOrAwaitValue(), CoreMatchers.`is`(
-            R.string.err_enter_title))
-    }
-
-
 }

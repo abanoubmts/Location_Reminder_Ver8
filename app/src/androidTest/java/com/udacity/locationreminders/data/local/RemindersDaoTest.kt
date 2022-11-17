@@ -13,6 +13,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi;
 import kotlinx.coroutines.test.runBlockingTest
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.notNullValue
+import org.hamcrest.MatcherAssert
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.*
 import java.util.*
@@ -26,6 +27,7 @@ class RemindersDaoTest {
 //    Done: Add testing implementation to the RemindersDao.kt
 @get:Rule
 var instantExecutorRule = InstantTaskExecutorRule()
+
 
     private lateinit var database: RemindersDatabase
 
@@ -54,13 +56,13 @@ var instantExecutorRule = InstantTaskExecutorRule()
         val reminders = database.reminderDao().getReminders()
 
         // THEN - There is only 1 reminder in the database
-        Assert.assertThat(reminders.size, `is`(1))
-        Assert.assertThat(reminders[0].id, `is`(reminder.id))
-        Assert.assertThat(reminders[0].title, `is`(reminder.title))
-        Assert.assertThat(reminders[0].description, `is`(reminder.description))
-        Assert.assertThat(reminders[0].location, `is`(reminder.location))
-        Assert.assertThat(reminders[0].latitude, `is`(reminder.latitude))
-        Assert.assertThat(reminders[0].longitude, `is`(reminder.longitude))
+        MatcherAssert.assertThat(reminders.size, `is`(1))
+        MatcherAssert.assertThat(reminders[0].id, `is`(reminder.id))
+        MatcherAssert.assertThat(reminders[0].title, `is`(reminder.title))
+        MatcherAssert.assertThat(reminders[0].description, `is`(reminder.description))
+        MatcherAssert.assertThat(reminders[0].location, `is`(reminder.location))
+        MatcherAssert.assertThat(reminders[0].latitude, `is`(reminder.latitude))
+        MatcherAssert.assertThat(reminders[0].longitude, `is`(reminder.longitude))
     }
 
 
@@ -74,13 +76,13 @@ var instantExecutorRule = InstantTaskExecutorRule()
         val loaded = database.reminderDao().getReminderById(reminder.id)
 
         // THEN - The loaded data contains the expected values.
-        Assert.assertThat<ReminderDTO>(loaded as ReminderDTO, notNullValue())
-        Assert.assertThat(loaded.id, `is`(reminder.id))
-        Assert.assertThat(loaded.title, `is`(reminder.title))
-        Assert.assertThat(loaded.description, `is`(reminder.description))
-        Assert.assertThat(loaded.location, `is`(reminder.location))
-        Assert.assertThat(loaded.latitude, `is`(reminder.latitude))
-        Assert.assertThat(loaded.longitude, `is`(reminder.longitude))
+        MatcherAssert.assertThat<ReminderDTO>(loaded as ReminderDTO, notNullValue())
+        MatcherAssert.assertThat(loaded.id, `is`(reminder.id))
+        MatcherAssert.assertThat(loaded.title, `is`(reminder.title))
+        MatcherAssert.assertThat(loaded.description, `is`(reminder.description))
+        MatcherAssert.assertThat(loaded.location, `is`(reminder.location))
+        MatcherAssert.assertThat(loaded.latitude, `is`(reminder.latitude))
+        MatcherAssert.assertThat(loaded.longitude, `is`(reminder.longitude))
     }
 
     @Test
@@ -111,7 +113,7 @@ var instantExecutorRule = InstantTaskExecutorRule()
 
         // THEN - The list is empty
         val reminders = database.reminderDao().getReminders()
-        Assert.assertThat(reminders.isEmpty(), `is`(true))
+        MatcherAssert.assertThat(reminders.isEmpty(), `is`(true))
     }
 
 }
