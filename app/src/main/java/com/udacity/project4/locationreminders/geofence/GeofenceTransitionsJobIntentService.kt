@@ -28,7 +28,7 @@ class GeofenceTransitionsJobIntentService : JobIntentService(), CoroutineScope {
     companion object {
         //  private const val JOB_ID = 573
 
-        //        TODO: call this to start the JobIntentService to handle the geofencing transition events
+        //        Done: call this to start the JobIntentService to handle the geofencing transition events
         fun enqueueWork(context: Context, intent: Intent) {
             enqueueWork(
                 context,
@@ -43,6 +43,7 @@ class GeofenceTransitionsJobIntentService : JobIntentService(), CoroutineScope {
     when a device enters a particular geofence area.
 The BroadcastReceiver is implemented as follows on handle work
      */
+
     override fun onHandleWork(intent: Intent) {
         //TODO: handle the geofencing transition events and
         // send a notification to the user when he enters the geofence area
@@ -57,10 +58,12 @@ The BroadcastReceiver is implemented as follows on handle work
                 return
             }
 
-            // if geofenceTransition has not error , it will send notification
+            // if geofenceTransition has not error and not empty , it will send notification
             if (geofencingEvent.geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER) {
-                sendNotification(geofencingEvent.triggeringGeofences)
-                Log.d(Constants.TAG, "Geofences found")
+
+                if (geofencingEvent.triggeringGeofences.isNotEmpty()) {
+                    sendNotification(geofencingEvent.triggeringGeofences)
+                    Log.d(Constants.TAG, "Geofences found")                }
             }
         }
     }

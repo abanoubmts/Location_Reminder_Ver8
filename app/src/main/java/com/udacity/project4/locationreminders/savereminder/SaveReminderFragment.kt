@@ -9,6 +9,7 @@ import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
@@ -16,6 +17,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
 import androidx.navigation.findNavController
@@ -47,7 +49,8 @@ class SaveReminderFragment : BaseFragment() {
     private val geofencePendingIntent: PendingIntent by lazy {
         val intent = Intent(requireContext(), GeofenceBroadcastReceiver::class.java)
         intent.action = Constants.ACTION_GEOFENCE_EVENT
-        PendingIntent.getBroadcast(requireContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+        PendingIntent.getBroadcast(requireContext(), 0, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT)
     }
 
     override fun onCreateView(
@@ -66,7 +69,7 @@ class SaveReminderFragment : BaseFragment() {
         return binding.root
     }
 
-
+    @RequiresApi(Build.VERSION_CODES.Q)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding.lifecycleOwner = this
@@ -83,7 +86,7 @@ class SaveReminderFragment : BaseFragment() {
             val latitude = _viewModel.latitude.value    // select the latitude value
             val longitude = _viewModel.longitude.value
 
-//            TODO: use the user entered reminder details to:
+//            Done: use the user entered reminder details to:
 //             1) add a geofencing request
 //             2) save the reminder to the local db
 
@@ -94,17 +97,16 @@ class SaveReminderFragment : BaseFragment() {
 
 
 
-            if (_viewModel.validateEnteredData(reminderDataItem)){
-                if (foregroundAndBackgroundLocationPermissionApproved()){
-                  checkDeviceLocationSetting()
-
-                    //addGeoForRemainder()
+            if (_viewModel.validateEnteredData(reminderDataItem)) {
+                if (foregroundAndBackgroundLocationPermissionApproved()) {
+                    // check device setting and add a geofencing request
+                    checkDeviceLocationSetting()
                 } else {
                     requestForegroundAndBackgroundLocationPermissions()
                 }
 
             }
-            }
+        }
 
     }
 /*
@@ -113,7 +115,8 @@ Before declaring the function, ensure that the app has permission to run in the 
 It’s useful to look into the Android API version of the device.
  */
 
-    @TargetApi(29)    // To determine whether permission has been granted or not, create the below function
+    @RequiresApi(Build.VERSION_CODES.Q)
+    // To determine whether permission has been granted or not, create the below function
     private fun foregroundAndBackgroundLocationPermissionApproved(): Boolean {
         val foregroundLocationApproved = (
                 PackageManager.PERMISSION_GRANTED ==
@@ -131,7 +134,8 @@ It’s useful to look into the Android API version of the device.
         return foregroundLocationApproved && backgroundPermissionApproved
     }
 
-    @TargetApi(29 )    //Request background and fine location permissions
+    @RequiresApi(Build.VERSION_CODES.Q)
+    //Request background and fine location permissions
     private fun requestForegroundAndBackgroundLocationPermissions() {
         if (foregroundAndBackgroundLocationPermissionApproved())
             return
@@ -144,7 +148,8 @@ It’s useful to look into the Android API version of the device.
             else -> Constants.REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE
         }
         Log.d(Constants.TAG_save, "Request foreground only location permission")
-        requestPermissions(permissionsArray, requestCode)
+       requestPermissions(permissionsArray, requestCode)
+
     }
 
 
@@ -253,6 +258,28 @@ reference to this  link <<https://www.section.io/engineering-education/geofencin
         super.onDestroy()
         //make sure to clear the view model after destroy, as it's a single view model.
         _viewModel.onClear()
+    }
+
+
+    // onRequestPermissionsResult method to scan location service is enabled or not
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantedResults: IntArray) {
+
+        super.onRequestPermissionsResult(requestCode, permissions, grantedResults)
+        if (grantedResults.isEmpty() ||
+            grantedResults[Constants.LOCATION_PERMISSION_INDEX] == PackageManager.PERMISSION_DENIED ||
+            (requestCode == Constants.REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE &&
+                    grantedResults[Constants.BACKGROUND_LOCATION_PERMISSION_INDEX] == PackageManager.PERMISSION_DENIED)
+        ) {
+
+            _viewModel.showSnackBarInt.value = R.string.permission_denied_explanation
+
+        } else {
+
+            checkDeviceLocationSetting()
+        }
     }
 }
 

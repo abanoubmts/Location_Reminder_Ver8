@@ -88,6 +88,8 @@ class ReminderListFragmentTest: AutoCloseKoinTest() {
         runBlocking {
             repository.deleteAllReminders()
         }
+
+
     }
 
 

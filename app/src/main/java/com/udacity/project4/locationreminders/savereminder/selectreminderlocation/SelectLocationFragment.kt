@@ -222,6 +222,8 @@ class SelectLocationFragment : BaseFragment() , OnMapReadyCallback {  // that wi
 */
         scanMyLocation()
        // map.moveCamera(CameraUpdateFactory.zoomIn())
+
+
     }
 
     @SuppressLint("MissingPermission")
@@ -250,10 +252,11 @@ class SelectLocationFragment : BaseFragment() , OnMapReadyCallback {  // that wi
 
 
 
+
     @SuppressLint("MissingPermission")  // through this line , checks this against the set of permissions required to access those APIs.
     // If the code using those APIs is called at runtime, then the program will crash.
     private fun getUserLocation() {
-     //   map.isMyLocationEnabled = true
+     map.isMyLocationEnabled = true
         Log.d("MapsActivity", "getLastLocation Called")
         fusedLocationProviderClient.lastLocation
             .addOnSuccessListener { location : Location? ->
@@ -347,4 +350,15 @@ To verify that the device’s location is enabled, add the following code.
     }
 
 
+// add onRequestPermissionsResult
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQUEST_CODE_BACKGROUND) {
+            checkDeviceLocationSettings()
+        }
+    }
 }

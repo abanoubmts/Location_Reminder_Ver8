@@ -63,14 +63,13 @@ class SaveReminderViewModelTest {
     @Test
     fun check_loading() = runBlockingTest {
 
+        fakeReminderDataSource = FakeDataSource()
+        saveReminderViewModel = SaveReminderViewModel(ApplicationProvider.getApplicationContext(), fakeReminderDataSource)
         mainCoroutineRule.pauseDispatcher()
-        saveReminderViewModel.saveReminder(createFakeReminderDataItem())
+        saveReminderViewModel.validateAndSaveReminder(createFakeReminderDataItem())
+        MatcherAssert.assertThat(saveReminderViewModel.showLoading.getOrAwaitValue(), CoreMatchers.`is`(true))
 
-        MatcherAssert.assertThat(saveReminderViewModel.showLoading.value, CoreMatchers.`is`(true))
-
-        mainCoroutineRule.resumeDispatcher()
-        MatcherAssert.assertThat(saveReminderViewModel.showLoading.value, CoreMatchers.`is`(false))
-    }
+            }
 
     private fun createFakeReminderDataItem(): ReminderDataItem {
         return ReminderDataItem(
