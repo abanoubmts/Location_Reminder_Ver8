@@ -86,14 +86,17 @@ class RemindersListViewModelTest {
    */
     @Test
     fun testShouldReturnError () = runBlockingTest  {
-
-        remindersRepository = FakeDataSource(null)
-        viewModel = RemindersListViewModel(ApplicationProvider.getApplicationContext(), remindersRepository)
+       // remindersRepository = FakeDataSource(null)
+        remindersRepository.saveReminder(reminder1)
+        remindersRepository.setReturnError(true)
         viewModel.loadReminders()
         MatcherAssert.assertThat(
-            viewModel.showSnackBar.value, CoreMatchers.`is`("Reminders not exist")
+            viewModel.showSnackBar.value, CoreMatchers.`is`("Error is happening during get the reminders")
         )
     }
+
+
+
 
 
 
@@ -122,32 +125,5 @@ anything - always matches, useful if you don’t care what the object under test
 
 
     }
-/*
-    @Test
-    fun loadReminders_remainderListNotEmpty() = mainCoroutineRule.runBlockingTest  {
-        val reminder = ReminderDTO("My Store", "Pick Stuff", "Abuja", 6.454202, 7.599545)
 
-        remindersRepository.saveReminder(reminder)
-        viewModel.loadReminders()
-
-        assertThat(viewModel.remindersList.getOrAwaitValue()).isNotEmpty()
-    }
-*/
-
-    /*@Test
-    fun loadReminders_updateSnackBarValue() {
-        mainCoroutineRule.pauseDispatcher()
-
-        remindersRepository.setReturnError(true)
-
-        viewModel.loadReminders()
-
-       mainCoroutineRule.resumeDispatcher()
-
-        MatcherAssert.assertThat(viewModel.showLoading.value, CoreMatchers.`is`(false))
-
-       //assertThat(viewModel.showSnackBar.getOrAwaitValue()).isEqualTo("Error is happening during get the reminders")
-    }
-
-     */
 }

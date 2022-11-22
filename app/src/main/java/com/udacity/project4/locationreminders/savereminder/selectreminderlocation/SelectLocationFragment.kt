@@ -84,11 +84,6 @@ class SelectLocationFragment : BaseFragment() , OnMapReadyCallback {  // that wi
 //        Done: call this function after the user confirms on the selected location
      //   onLocationSelected()
 
-
-
-
-
-
         binding.saveLocation.setOnClickListener{
             if(marker!= null) {
                 onLocationSelected()
@@ -229,7 +224,8 @@ class SelectLocationFragment : BaseFragment() , OnMapReadyCallback {  // that wi
     @SuppressLint("MissingPermission")
     private fun scanMyLocation() {
         if (isPermissionGranted()) {
-            map.isMyLocationEnabled = true
+           map.isMyLocationEnabled = true
+
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
                 checkDeviceLocationSettings()
             } else {
@@ -246,17 +242,18 @@ class SelectLocationFragment : BaseFragment() , OnMapReadyCallback {  // that wi
         //        DONE: zoom to the user location after taking his permission
 
 
-      //  map.moveCamera(CameraUpdateFactory.zoomIn())
+     // map.moveCamera(CameraUpdateFactory.zoomIn())
         getUserLocation()
     }
 
 
 
 
-    @SuppressLint("MissingPermission")  // through this line , checks this against the set of permissions required to access those APIs.
+    @SuppressLint("MissingPermission")
+    // through this line , checks this against the set of permissions required to access those APIs.
     // If the code using those APIs is called at runtime, then the program will crash.
     private fun getUserLocation() {
-     map.isMyLocationEnabled = true
+     //map.isMyLocationEnabled = true
         Log.d("MapsActivity", "getLastLocation Called")
         fusedLocationProviderClient.lastLocation
             .addOnSuccessListener { location : Location? ->

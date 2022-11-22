@@ -12,21 +12,20 @@ class FakeDataSource(var remindersList: MutableList<ReminderDTO>? = mutableListO
 
     override suspend fun getReminders(): Result<List<ReminderDTO>> {
         //Done("Return the reminders")
-        if (error_flag) {
-            return Result.Error(
-                "Error is happening during get the reminders"
-            )
-        }
 
-
-
-        remindersList?.let { return Result.Success(it) }
-        return Result.Error("Reminders not exist")
+            try {
+                if (error_flag) {
+                      return Result.Error(
+                        "Error is happening during get the reminders"
+                    )
+                }
+                else {
+                    return  Result.Success(ArrayList(remindersList))
+                }
+            } catch (ex: Exception) {
+                return Result.Error(ex.localizedMessage)
+            }
     }
-
-
-
-
 
     override suspend fun saveReminder(reminder: ReminderDTO) {
         // Done("save the reminder")
@@ -35,20 +34,24 @@ class FakeDataSource(var remindersList: MutableList<ReminderDTO>? = mutableListO
 
     override suspend fun getReminder(id: String): Result<ReminderDTO> {
         // Done("return the reminder with the id")
-        val reminder = remindersList?.find { reminderDTO ->
-            reminderDTO.id == id
-        }
-        return when {
-            error_flag -> {
-                Result.Error("Reminder not found!")
+        try {
+            val reminder = remindersList?.find { reminderDTO ->
+                reminderDTO.id == id
             }
+            return when {
+                error_flag -> {
+                    Result.Error("Error is happening during get the reminders")
+                }
 
-            reminder != null -> {
-                Result.Success(reminder)
+                reminder != null -> {
+                    Result.Success(reminder)
+                }
+                else -> {
+                    Result.Error("Reminder not found!")
+                }
             }
-            else -> {
-                Result.Error("Reminder not found!")
-            }
+        } catch (ex: Exception) {
+            return Result.Error(ex.localizedMessage)
         }
     }
 
