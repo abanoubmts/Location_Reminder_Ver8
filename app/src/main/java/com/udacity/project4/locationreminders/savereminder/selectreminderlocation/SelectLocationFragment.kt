@@ -15,6 +15,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.*
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
@@ -82,8 +83,17 @@ class SelectLocationFragment : BaseFragment() , OnMapReadyCallback {  // that wi
 
 
 //        Done: call this function after the user confirms on the selected location
-     //   onLocationSelected()
+        //   onLocationSelected()
 
+
+
+        return binding.root
+
+    }
+
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         binding.saveLocation.setOnClickListener{
             if(marker!= null) {
                 onLocationSelected()
@@ -91,9 +101,6 @@ class SelectLocationFragment : BaseFragment() , OnMapReadyCallback {  // that wi
                 Toast.makeText(context,"Please Select a location !",Toast.LENGTH_LONG).show()
             }
         }
-
-        return binding.root
-
     }
 
     private fun onLocationSelected() {
@@ -103,7 +110,7 @@ class SelectLocationFragment : BaseFragment() , OnMapReadyCallback {  // that wi
         // When the user confirms on the selected location,
         // send back the selected location details to the view model
         // and navigate back to the previous fragment to save the reminder and add the geofence
-       marker?.let {marker ->
+        marker?.let {marker ->
             _viewModel.latitude.value = marker.position.latitude
             _viewModel.longitude.value = marker.position.longitude
             _viewModel.reminderSelectedLocationStr.value = marker.title
@@ -216,7 +223,7 @@ class SelectLocationFragment : BaseFragment() , OnMapReadyCallback {  // that wi
         }
 */
         scanMyLocation()
-       // map.moveCamera(CameraUpdateFactory.zoomIn())
+        // map.moveCamera(CameraUpdateFactory.zoomIn())
 
 
     }
@@ -224,7 +231,7 @@ class SelectLocationFragment : BaseFragment() , OnMapReadyCallback {  // that wi
     @SuppressLint("MissingPermission")
     private fun scanMyLocation() {
         if (isPermissionGranted()) {
-           map.isMyLocationEnabled = true
+         //   map.isMyLocationEnabled = true
 
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
                 checkDeviceLocationSettings()
@@ -232,57 +239,27 @@ class SelectLocationFragment : BaseFragment() , OnMapReadyCallback {  // that wi
                 requestQPermission()
             }
 
+            getUserLocation()
+
+            //        DONE: zoom to the user location after taking his permission
+
+            //getUserLocation()
         } else {
-            ActivityCompat.requestPermissions(
+            /*ActivityCompat.requestPermissions(
                 context as Activity,
                 arrayOf<String>(Manifest.permission.ACCESS_FINE_LOCATION),
                 1 //REQUEST_LOCATION_PERMISSION
-            )
+            )*/
+// instead of the above line , firstly check for both of permission fine location and ACCESS_COARSE_LOCATION
+            // then enable my location else throw exception and the same function will be used on request permission result
+            ASKPermission()
         }
-        //        DONE: zoom to the user location after taking his permission
 
 
-     // map.moveCamera(CameraUpdateFactory.zoomIn())
-        getUserLocation()
+
     }
 
 
-
-
-    @SuppressLint("MissingPermission")
-    // through this line , checks this against the set of permissions required to access those APIs.
-    // If the code using those APIs is called at runtime, then the program will crash.
-    private fun getUserLocation() {
-     //map.isMyLocationEnabled = true
-        Log.d("MapsActivity", "getLastLocation Called")
-        fusedLocationProviderClient.lastLocation
-            .addOnSuccessListener { location : Location? ->
-                location?.let {
-                    val userLocation = LatLng(location.latitude, location.longitude)
-                    map.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation, Constants.DEFAULT_ZOOM_LEVEL))
-                    marker=  map.addMarker(
-                        MarkerOptions().position(userLocation)
-                            .title(getString(R.string.mylocation))
-                    )
-                    marker?.showInfoWindow()
-                }
-            }
-    }
-
-    // The Fused Location API is a higher-level Google Play Services API that wraps the underlying location sensors like GPS .
-    // so the below function will be implemented   to get the last location
-    private val fusedLocationProviderClient by lazy {   // use lazy to create the first instance with the first call
-        LocationServices.getFusedLocationProviderClient(requireActivity())
-    }
-
-
-
-    private fun isPermissionGranted(): Boolean {
-        return ContextCompat.checkSelfPermission(
-            context!!,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-    }
 
     @TargetApi(Build.VERSION_CODES.Q)
     private fun requestQPermission() {
@@ -346,16 +323,100 @@ To verify that the device’s location is enabled, add the following code.
         }
     }
 
+    @SuppressLint("MissingPermission")
+    // through this line , checks this against the set of permissions required to access those APIs.
+    // If the code using those APIs is called at runtime, then the program will crash.
+    private fun getUserLocation() {
+        map.isMyLocationEnabled = true
+        Log.d("MapsActivity", "getLastLocation Called")
+        fusedLocationProviderClient.lastLocation
+            .addOnSuccessListener { location : Location? ->
+                location?.let {
+                    val userLocation = LatLng(location.latitude, location.longitude)
+                    map.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation, Constants.DEFAULT_ZOOM_LEVEL))
+                    marker=  map.addMarker(
+                        MarkerOptions().position(userLocation)
+                            .title(getString(R.string.mylocation))
+                    )
+                    marker?.showInfoWindow()
+                }
+            }
+    }
 
-// add onRequestPermissionsResult
+    // The Fused Location API is a higher-level Google Play Services API that wraps the underlying location sensors like GPS .
+    // so the below function will be implemented   to get the last location
+    private val fusedLocationProviderClient by lazy {   // use lazy to create the first instance with the first call
+        LocationServices.getFusedLocationProviderClient(requireActivity())
+    }
+
+
+
+    private fun isPermissionGranted(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            requireActivity(),
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+
+    private fun ASKPermission() {
+
+        // to check  both of access fine and  ACCESS_COARSE_LOCATION
+        //to fix The user's real-time location cannot be shown on the map when the foreground location permission is granted (Nexus 5X, API 29)
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED &&
+            ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED) {
+            map.isMyLocationEnabled = true
+
+        }
+
+        else {
+            this.requestPermissions(
+                arrayOf<String>(Manifest.permission.ACCESS_FINE_LOCATION),
+                1
+            )
+        }
+    }
+
+
+
+/*
+check  the gadget’s location.
+Permissions granted will be worthless if the user’s device location is deactivated.
+To verify that the device’s location is enabled, add the following code.
+ */
+
+
+
+    // add onRequestPermissionsResult
+
+
     override fun onRequestPermissionsResult(
         requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == REQUEST_CODE_BACKGROUND) {
-            checkDeviceLocationSettings()
+        permissions: Array<String>,
+        grantedResults: IntArray) {
+
+        if (grantedResults.isEmpty() ||
+            grantedResults[Constants.LOCATION_PERMISSION_INDEX] == PackageManager.PERMISSION_DENIED ||
+            (requestCode == Constants.REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE &&
+                    grantedResults[Constants.BACKGROUND_LOCATION_PERMISSION_INDEX] == PackageManager.PERMISSION_DENIED)
+        ) {
+
+//the shouldShowRequestPermissionRationale() function which returns true if the app has requested this permission previously and the user denied the request. If the user turned down the permission request in the past and chose the Don't ask again option, this method returns false
+            // as per the reference <<https://stackoverflow.com/questions/32347532/android-m-permissions-confused-on-the-usage-of-shouldshowrequestpermissionrati>>
+            if (
+                ActivityCompat.shouldShowRequestPermissionRationale(requireActivity(), Manifest.permission.ACCESS_FINE_LOCATION)
+            ) {
+
+                Toast.makeText(context,R.string.permission_denied_explanation,Toast.LENGTH_LONG).show()
+
+            } else {
+                ASKPermission()
+            }
+        } else {
+
+            getUserLocation()
         }
     }
 }
