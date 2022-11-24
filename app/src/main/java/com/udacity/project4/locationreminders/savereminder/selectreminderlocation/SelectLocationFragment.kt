@@ -392,7 +392,7 @@ To verify that the device’s location is enabled, add the following code.
 
         else {
             this.requestPermissions(
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION , Manifest.permission.ACCESS_BACKGROUND_LOCATION),
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION ),
                 1
             )
         }
