@@ -15,6 +15,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.*
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -49,7 +50,8 @@ class SelectLocationFragment : BaseFragment() , OnMapReadyCallback {  // that wi
 
     var long : Double = 0.0
     var title = ""
-
+    private val gadgetQ = android.os.Build.VERSION.SDK_INT >=
+            android.os.Build.VERSION_CODES.Q
     override val _viewModel: SaveReminderViewModel by inject()
     private lateinit var binding: FragmentSelectLocationBinding
     private lateinit var map: GoogleMap
@@ -91,17 +93,33 @@ class SelectLocationFragment : BaseFragment() , OnMapReadyCallback {  // that wi
 
     }
 
-
+    @RequiresApi(Build.VERSION_CODES.Q)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding.saveLocation.setOnClickListener{
+
+
+
+
+
+
             if(marker!= null) {
-                onLocationSelected()
+                if (foregroundAndBackgroundLocationPermissionApproved()) {
+                    // check device setting and add a geofencing request
+                    checkDeviceLocationSetting()
+                } else {
+                    requestForegroundAndBackgroundLocationPermissions()
+                }
             }else{
                 Toast.makeText(context,"Please Select a location !",Toast.LENGTH_LONG).show()
             }
+
         }
+
+
     }
+
+
 
     private fun onLocationSelected() {
 
@@ -239,6 +257,7 @@ class SelectLocationFragment : BaseFragment() , OnMapReadyCallback {  // that wi
                 requestQPermission()
             }
 
+
             getUserLocation()
 
             //        DONE: zoom to the user location after taking his permission
@@ -373,7 +392,7 @@ To verify that the device’s location is enabled, add the following code.
 
         else {
             this.requestPermissions(
-                arrayOf<String>(Manifest.permission.ACCESS_FINE_LOCATION),
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION , Manifest.permission.ACCESS_BACKGROUND_LOCATION),
                 1
             )
         }
@@ -419,4 +438,91 @@ To verify that the device’s location is enabled, add the following code.
             getUserLocation()
         }
     }
+
+
+
+    /*
+implement check permission
+Before declaring the function, ensure that the app has permission to run in the foreground and background.
+It’s useful to look into the Android API version of the device.
+ */
+
+    @RequiresApi(Build.VERSION_CODES.Q)
+    // To determine whether permission has been granted or not, create the below function
+    private fun foregroundAndBackgroundLocationPermissionApproved(): Boolean {
+        val foregroundLocationApproved = (
+                PackageManager.PERMISSION_GRANTED ==
+                        ActivityCompat.checkSelfPermission(requireContext(),
+                            Manifest.permission.ACCESS_FINE_LOCATION))
+        val backgroundPermissionApproved =
+            if (gadgetQ) {
+                PackageManager.PERMISSION_GRANTED ==
+                        ActivityCompat.checkSelfPermission(
+                            requireContext(), Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                        )
+            } else {
+                true
+            }
+        return foregroundLocationApproved && backgroundPermissionApproved
+    }
+
+    @RequiresApi(Build.VERSION_CODES.Q)
+    //Request background and fine location permissions
+    private fun requestForegroundAndBackgroundLocationPermissions() {
+        if (foregroundAndBackgroundLocationPermissionApproved())
+            return
+        var permissionsArray = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+        val requestCode = when {
+            gadgetQ -> {
+                permissionsArray += Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                Constants.REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE
+            }
+            else -> Constants.REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE
+        }
+        Log.d(Constants.TAG_save, "Request foreground only location permission")
+        requestPermissions(permissionsArray, requestCode)
+
+    }
+
+
+    private fun checkDeviceLocationSetting(resolve:Boolean = true) {
+        // create a location request that request for the quality of service to update the location
+
+        val locationRequest = LocationRequest.create().apply {
+            priority = LocationRequest.PRIORITY_LOW_POWER
+        }
+        val builder = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
+        val settingsClient = LocationServices.getSettingsClient(requireActivity() ) // check if the client location settings are satisfied
+        val locationSettingsResponseTask =
+            settingsClient.checkLocationSettings(builder.build())
+
+        locationSettingsResponseTask.addOnFailureListener { exception ->
+            if (exception is ResolvableApiException && resolve){
+                try {
+                    startIntentSenderForResult(exception.resolution.intentSender, Constants.REQUEST_TURN_DEVICE_LOCATION_ON,
+                        null, 0,0,0, null)
+
+                } catch (sendEx: IntentSender.SendIntentException) {
+                    Log.d(Constants.TAG_save, "Error getting location settings resolution: " + sendEx.message)
+                }
+            } else {
+                Snackbar.make(
+                    requireView(),
+                    R.string.location_required_error, Snackbar.LENGTH_INDEFINITE
+                ).setAction(android.R.string.ok) {
+                    checkDeviceLocationSetting()
+                }.show()
+            }
+        }
+        locationSettingsResponseTask.addOnCompleteListener {
+            if ( it.isSuccessful ) {
+
+                Log.i("Successful", "$it")
+
+                onLocationSelected()
+
+            }
+        }
+    }
+
 }
