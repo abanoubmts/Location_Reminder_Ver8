@@ -21,6 +21,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import androidx.navigation.fragment.findNavController
+import com.firebase.ui.auth.viewmodel.email.EmailLinkSendEmailHandler
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
@@ -99,17 +100,15 @@ class SelectLocationFragment : BaseFragment() , OnMapReadyCallback {  // that wi
         binding.saveLocation.setOnClickListener{
 
 
+/*
 
 
-
-
+*/
             if(marker!= null) {
-                if (foregroundAndBackgroundLocationPermissionApproved()) {
-                    // check device setting and add a geofencing request
-                    checkDeviceLocationSetting()
-                } else {
-                    requestForegroundAndBackgroundLocationPermissions()
-                }
+
+                   onLocationSelected()
+
+
             }else{
                 Toast.makeText(context,"Please Select a location !",Toast.LENGTH_LONG).show()
             }
@@ -240,7 +239,13 @@ class SelectLocationFragment : BaseFragment() , OnMapReadyCallback {  // that wi
             requestLocationPermission()  // ask user to allow permission on application (Allow / Deny)
         }
 */
-        scanMyLocation()
+        if (foregroundAndBackgroundLocationPermissionApproved()) {
+            checkDeviceLocationSetting()
+            scanMyLocation()
+        } else {
+            requestForegroundAndBackgroundLocationPermissions()
+        }
+
         // map.moveCamera(CameraUpdateFactory.zoomIn())
 
 
@@ -250,12 +255,8 @@ class SelectLocationFragment : BaseFragment() , OnMapReadyCallback {  // that wi
     private fun scanMyLocation() {
         if (isPermissionGranted()) {
          //   map.isMyLocationEnabled = true
+            checkDeviceLocationSettings()
 
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-                checkDeviceLocationSettings()
-            } else {
-                requestQPermission()
-            }
 
 
             getUserLocation()
@@ -373,7 +374,9 @@ To verify that the device’s location is enabled, add the following code.
     private fun isPermissionGranted(): Boolean {
         return ContextCompat.checkSelfPermission(
             requireActivity(),
-            Manifest.permission.ACCESS_FINE_LOCATION
+            arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION).toString()
         ) == PackageManager.PERMISSION_GRANTED
     }
 
@@ -392,7 +395,7 @@ To verify that the device’s location is enabled, add the following code.
 
         else {
             this.requestPermissions(
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION ),
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION  ),
                 1
             )
         }
@@ -409,6 +412,8 @@ To verify that the device’s location is enabled, add the following code.
 
 
     // add onRequestPermissionsResult
+
+
 
 
     override fun onRequestPermissionsResult(
@@ -522,6 +527,19 @@ It’s useful to look into the Android API version of the device.
                 onLocationSelected()
 
             }
+        }
+    }
+
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_TURN_DEVICE_LOCATION_ON) {
+            if (resultCode == Activity.RESULT_OK) {
+                getUserLocation()
+            } else{
+                checkDeviceLocationSetting(false)
+            }
+
         }
     }
 
